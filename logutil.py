@@ -11,4 +11,4 @@ def error(message: str) -> None:
     print("==> ERROR: " + message)
 
 def command(command: str) -> None:
-    print("  => " + command)
+    print("--> " + command)

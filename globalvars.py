@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from channelmgr import ChannelManager
-
 domain_target: str = "service.mkey.163.com"
 
 working_dir: Path = Path.home() / ".config" / "identityv-login-helper"
@@ -21,6 +19,6 @@ cached_qrcode_data: dict = {}
 pending_login_info = None
 uri_remoteip = ""
 
-channels_manager: ChannelManager = ChannelManager()
+channels_manager = None
 fake_device: str = ""
 config: dict = None

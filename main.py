@@ -23,14 +23,16 @@ import os
 import random
 import string
 import sys
-from typing import Dict, Any
 
 import requests
 import requests.packages
 from gevent import monkey
+# monkey-patch earlier
+monkey.patch_all()
 
 import globalvars
 from certificatemanager import CertificateManager
+from channelmgr import ChannelManager
 from globalvars import working_dir, fake_device_path, config_path, webcert_path, webkey_path, cacert_path, domain_target
 from hostsmanager import HostsManager
 from logutil import error, info, warning
@@ -44,8 +46,6 @@ def is_admin():
         return os.geteuid() == 0
 
 def main() -> None:
-    monkey.patch_all()
-
     if not is_admin():
         if sys.platform.startswith("win32"):
             error("not running with administrator privileges; trying to re-elevate...")
@@ -61,10 +61,10 @@ def main() -> None:
 
     working_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(str(working_dir))
-
     info("working directory changed to " + str(working_dir))
 
     host_mgr: HostsManager = HostsManager()
+    globalvars.channels_manager: ChannelManager = ChannelManager()
 
     requests.packages.urllib3.disable_warnings()
 
