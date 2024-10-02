@@ -1,4 +1,4 @@
-from pathlib import Path, PosixPath
+from pathlib import Path
 
 from channelmgr import ChannelManager
 

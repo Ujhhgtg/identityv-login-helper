@@ -23,6 +23,7 @@ import os
 import random
 import string
 import sys
+from typing import Dict, Any
 
 import requests
 import requests.packages
@@ -47,7 +48,7 @@ def main() -> None:
 
     if not is_admin():
         if sys.platform.startswith("win32"):
-            error("not running with administrator priviledges; trying to re-elevate...")
+            error("not running with administrator privileges; trying to re-elevate...")
             ctypes.windll.shell32.ShellExecuteW(
                 None, "runas", sys.executable, " ".join(sys.argv), None, 1
             )
@@ -87,7 +88,7 @@ def main() -> None:
         with fake_device_path.open("r") as f:
             _fake_device = json.load(f)
 
-    fake_device = _fake_device
+    globalvars.fake_device = _fake_device
 
     if not config_path.is_file():
         with config_path.open("w") as f:
