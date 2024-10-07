@@ -1,10 +1,11 @@
+import base64
 import hashlib
 import hmac
 import json
-import requests
 from urllib.parse import urlencode
+
+import requests
 from Crypto.Cipher import AES
-import base64
 
 
 def pad(data):

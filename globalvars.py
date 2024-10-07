@@ -17,7 +17,7 @@ hosts_file_macos_linux_path: Path = Path("/etc/hosts")
 channel_account: str = ""
 cached_qrcode_data: dict = {}
 pending_login_info = None
-uri_remoteip = ""
+uri_remote_ip: str = ""
 
 channels_manager = None
 fake_device: str = ""

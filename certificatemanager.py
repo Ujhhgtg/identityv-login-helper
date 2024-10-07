@@ -26,8 +26,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
 from cryptography.x509.oid import NameOID
 
+import globalvars
 from logutil import command, warning, error, info
-from globalvars import system_cert_linux_path
 
 
 class CertificateManager:
@@ -125,9 +125,9 @@ class CertificateManager:
                 ])
 
             else:
-                command("sudo cp " + cert_path + " " + str(system_cert_linux_path))
+                command("sudo cp " + cert_path + " " + str(globalvars.system_cert_linux_path))
                 subprocess.check_call([
-                    'sudo', 'cp', cert_path, str(system_cert_linux_path)
+                    'sudo', 'cp', cert_path, str(globalvars.system_cert_linux_path)
                 ])
                 command("sudo update-ca-certificates")
                 proc_1 = subprocess.run([

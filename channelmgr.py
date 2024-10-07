@@ -24,7 +24,6 @@ import requests
 
 import globalvars
 from const import manual_login_channels
-from globalvars import channels_path
 from logutil import info, error
 
 
@@ -102,8 +101,8 @@ class ChannelManager:
         self.channels = []
         from channelHandler.miChannelHandler import MiChannel
 
-        if channels_path.is_file():
-            with channels_path.open("r") as f:
+        if globalvars.channels_path.is_file():
+            with globalvars.channels_path.open("r") as f:
                 try:
                     data = json.load(f)
                     info("resolved channel login info")
@@ -120,16 +119,16 @@ class ChannelManager:
                                 self.channels.append(Channel.from_dict(item))
                 except ValueError:
                     f.close()
-                    with channels_path.open("w") as f:
+                    with globalvars.channels_path.open("w") as f:
                         json.dump([], f)
 
         else:
-            with channels_path.open("w") as f:
+            with globalvars.channels_path.open("w") as f:
                 json.dump([], f)
             self.channels = []
 
     def save_records(self):
-        with channels_path.open("w") as file:
+        with globalvars.channels_path.open("w") as file:
             old_data = [channel.__dict__.copy() for channel in self.channels]
             data = old_data.copy()
             for channel_data in data:

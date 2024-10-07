@@ -13,13 +13,11 @@ from gevent import pywsgi
 import const
 import globalvars
 from dnsmgr import SecureDNS, SimulatedDNS
-from globalvars import uri_remoteip, channels_manager, channel_account, cached_qrcode_data, pending_login_info, \
-    domain_target, webcert_path, webkey_path
 from logutil import info, error, warning
 
 app = Flask(__name__)
 
-loginMethod = [
+login_methods = [
     {
         "name": "手机账号",
         "icon_url": "",
@@ -77,12 +75,12 @@ def request_get_as_cv(request, cv):
         query["cv"] = cv
     resp = g_req.request(
         method=request.method,
-        url=uri_remoteip + request.path,
+        url=globalvars.uri_remote_ip + request.path,
         params=query,
         headers=request.headers,
         cookies=request.cookies,
         allow_redirects=False,
-        verify=False,
+        verify=False
     )
     excluded_headers = [
         "content-encoding",
@@ -104,7 +102,7 @@ def proxy(request):
     # 向目标服务发送代理请求
     resp = requests.request(
         method=request.method,
-        url=uri_remoteip + request.path,
+        url=globalvars.uri_remote_ip + request.path,
         params=query,
         headers=request.headers,
         data=new_body,
@@ -147,7 +145,7 @@ def request_post_as_cv(request, cv):
     app.logger.info(new_body)
     resp = g_req.request(
         method=request.method,
-        url=uri_remoteip + request.path,
+        url=globalvars.uri_remote_ip + request.path,
         params=query,
         data=new_body,
         headers=request.headers,
@@ -174,7 +172,7 @@ def handle_login_methods(game_id):
     try:
         resp: Response = request_get_as_cv(request, "i4.7.0")
         new_login_methods = resp.get_json()
-        new_login_methods["entrance"] = [(loginMethod)]
+        new_login_methods["entrance"] = [(login_methods)]
         new_login_methods["select_platform"] = True
         new_login_methods["qrcode_select_platform"] = True
         for i in new_login_methods["config"]:
@@ -247,7 +245,7 @@ def _manual_list():
 @app.route("/_idv-login/list", methods=["GET"])
 def _list_channels():
     try:
-        body = channels_manager.list_channels()
+        body = globalvars.channels_manager.list_channels()
     except Exception as e:
         body = {
             "error": str(e)
@@ -258,16 +256,16 @@ def _list_channels():
 @app.route("/_idv-login/switch", methods=["GET"])
 def _switch_channel():
     channel_account = request.args["uuid"]
-    if cached_qrcode_data:
-        data = cached_qrcode_data
-        channels_manager.simulate_scan(request.args["uuid"], data["uuid"], data["game_id"])
+    if globalvars.cached_qrcode_data:
+        data = globalvars.cached_qrcode_data
+        globalvars.channels_manager.simulate_scan(request.args["uuid"], data["uuid"], data["game_id"])
     return {"current": channel_account}
 
 
 @app.route("/_idv-login/del", methods=["GET"])
 def _del_channel():
     resp = {
-        "success": channels_manager.delete(request.args["uuid"])
+        "success": globalvars.channels_manager.delete(request.args["uuid"])
     }
     return jsonify(resp)
 
@@ -275,7 +273,7 @@ def _del_channel():
 @app.route("/_idv-login/rename", methods=["GET"])
 def _rename_channel():
     resp = {
-        "success": channels_manager.rename(request.args["uuid"], request.args["new_name"])
+        "success": globalvars.channels_manager.rename(request.args["uuid"], request.args["new_name"])
     }
     return jsonify(resp)
 
@@ -283,7 +281,7 @@ def _rename_channel():
 @app.route("/_idv-login/import", methods=["GET"])
 def _import_channel():
     resp = {
-        "success": channels_manager.manual_import(request.args["channel"])
+        "success": globalvars.channels_manager.manual_import(request.args["channel"])
     }
     return jsonify(resp)
 
@@ -295,28 +293,28 @@ def _handle_switch_page():
 
 @app.route("/mpay/api/qrcode/query", methods=["GET"])
 def handle_qrcode_query():
-    if channel_account:
+    if globalvars.channel_account:
         return proxy(request)
     else:
         resp: Response = proxy(request)
         qr_code_status = resp.get_json()["qrcode"]["status"]
-        if qr_code_status == 2 and channel_account == "":
+        if qr_code_status == 2 and globalvars.channel_account == "":
             globalvars.pending_login_info = resp.get_json()["login_info"]
         return resp
 
 
 @app.route("/mpay/api/users/login/qrcode/exchange_token", methods=['POST'])
 def handle_token_exchange():
-    if channel_account:
-        info("logging in to " + channel_account)
+    if globalvars.channel_account:
+        info("logging in to " + globalvars.channel_account)
         return proxy(request)
     else:
         info("got channel login token")
         resp: Response = proxy(request)
         if resp.status_code == 200:
-            if pending_login_info:
-                channels_manager.import_from_scan(
-                    pending_login_info, resp.get_json()
+            if globalvars.pending_login_info:
+                globalvars.channels_manager.import_from_scan(
+                    globalvars.pending_login_info, resp.get_json()
                 )
         return resp
 
@@ -330,26 +328,26 @@ def handle_qrcode(path):
 
 
 @app.route("/<path:path>", methods=["GET", "POST"])
-def global_proxy(path):
+def globalProxy(path):
     if request.method == "GET":
         return request_get_as_cv(request, "i4.7.0")
     else:
         return request_post_as_cv(request, "i4.7.0")
 
 
-# @app.before_request
-# def before_request_func():
-#     if request.method == "POST":
-#         logger.debug(f"请求 {request.method} {request.path} {request.args} {request.get_data(as_text=True)}")
-#     else:
-#         logger.debug(f"请求 {request.method} {request.path} {request.args}")
+@app.before_request
+def before_request_func():
+    if request.method == "POST":
+        info(f"请求 {request.method} {request.path} {request.args} {request.get_data(as_text=True)}")
+    else:
+        info(f"请求 {request.method} {request.path} {request.args}")
 
 
-# @app.after_request
-# def after_request_func(response):
-#     if request.content_type == "application/json":
-#         logger.debug(f"发送 {response.status} {response.headers} {response.get_json()}")
-#     return response
+@app.after_request
+def after_request_func(response):
+    if request.content_type == "application/json":
+        info(f"发送 {response.status} {response.headers} {response.get_json()}")
+    return response
 
 
 class ProxyManager:
@@ -371,11 +369,10 @@ class ProxyManager:
     def run():
         resolver, fallback_resolver = SecureDNS(), SimulatedDNS()
         try:
-            target = resolver.get_host_by_name(domain_target)
+            target = resolver.get_host_by_name(globalvars.domain_target)
         except:
-            target = fallback_resolver.get_host_by_name(domain_target)
+            target = fallback_resolver.get_host_by_name(globalvars.domain_target)
 
-        # result check
         try:
             if target is None or g_req.get(f"https://{target}", verify=False).status_code != 200:
                 warning("could not resolve target address; will use hardcoded value")
@@ -384,16 +381,17 @@ class ProxyManager:
             warning("could not resolve target address; will use hardcoded value")
             target = "42.186.193.21"
 
-        globalvars.uri_remoteip = f"https://{target}"
+        globalvars.uri_remote_ip = f"https://{target}"
+        print(globalvars.uri_remote_ip)
         ProxyManager.ensure_port_not_in_use()
         server = pywsgi.WSGIServer(
             listener=("127.0.0.1", 443),
-            certfile=str(webcert_path),
-            keyfile=str(webkey_path),
+            certfile=str(globalvars.webcert_path),
+            keyfile=str(globalvars.webkey_path),
             application=app
         )
 
-        if socket.gethostbyname(domain_target) == "127.0.0.1":
+        if socket.gethostbyname(globalvars.domain_target) == "127.0.0.1":
             info("proxy server started!")
             info("you can now start the game")
             info("DO NOT quit the server until you LOGIN INTO the game")

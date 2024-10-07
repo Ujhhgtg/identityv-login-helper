@@ -17,8 +17,9 @@
  """
 
 import random
-import requests
 import socket
+
+import requests
 
 from logutil import info
 

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import json
 import time
-import base64
+
 import channelmgr
-
-
+import globalvars
 from channelHandler.miLogin.miChannel import MiLogin
-from globalvars import fake_device
 from logutil import info, error
 
 
@@ -119,7 +118,7 @@ class MiChannel(channelmgr.Channel):
             str(channel_data["appAccountId"]),
             channel_data["session"],
         )
-        fd = fake_device
+        fd = globalvars.fake_device
         self.uniData = channelUtils.post_signed_data(self.uniBody)
         info(f"Get unisdk data for {self.uniData}")
         self.uniSDKJSON=json.loads(base64.b64decode(self.uniData["unisdk_login_json"]).decode())

@@ -1,11 +1,12 @@
+import hashlib
+import hmac
 import json
 import random
 import string
-import hmac
-import hashlib
+
 import requests
 
-from globalvars import fake_device
+import globalvars
 
 LOG_KEY="SvShWXDcmogbZJoU3YWe3Su3Ci-mCRcw"
 
@@ -30,7 +31,7 @@ def calc_sign(url, method, data):
     return hmac.new(key.encode(), src.encode(), hashlib.sha256).hexdigest()
 
 def build_sauth(login_channel, app_channel, uid, session):
-    fake_data = fake_device
+    fake_data = globalvars.fake_device
     ip=_get_my_ip()
     data = {
         "gameid": "h55",#maybe works for all games

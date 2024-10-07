@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 
+import os
 import subprocess
+import sys
 from pathlib import Path
 
+import globalvars
 from logutil import warning, error, command
 from python_hosts import Hosts, HostsEntry
-
-import os
-import sys
-
-from globalvars import hosts_file_windows_path, hosts_file_macos_linux_path
 
 
 class HostsManager:
     def __init__(self) -> None:
         if sys.platform.startswith("win32"):
-            hosts_file_path: Path = hosts_file_windows_path
+            hosts_file_path: Path = globalvars.hosts_file_windows_path
         else:
-            hosts_file_path: Path = hosts_file_macos_linux_path
+            hosts_file_path: Path = globalvars.hosts_file_macos_linux_path
 
         if not hosts_file_path.is_file():
             warning("hosts file does not exist; creating...")
