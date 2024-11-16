@@ -1,3 +1,5 @@
+import globalvars
+
 def info(message: str) -> None:
     print("==> " + message)
 
@@ -12,3 +14,7 @@ def error(message: str) -> None:
 
 def command(command: str) -> None:
     print("--> " + command)
+    
+def debug(message: str) -> None:
+    if globalvars.DEBUG:
+        print("==> DEBUG: " + message)

@@ -11,6 +11,7 @@ import os
 import random
 import string
 import sys
+from pathlib import Path
 
 import requests
 import requests.packages
@@ -23,13 +24,19 @@ from logutil import error, info, warning
 from proxymanager import ProxyManager
 
 
-def is_admin():
-    try:
+def is_admin() -> bool | None:
+    if sys.platform.startswith("win32"):
         return ctypes.windll.shell32.IsUserAnAdmin()
-    except AttributeError:
+    elif sys.platform.startswith("darwin") or sys.platform.startswith("linux"):
         return os.geteuid() == 0
 
 def main() -> None:
+    # os check
+    if not sys.platform.startswith("win32") and not sys.platform.startswith("darwin") and not sys.platform.startswith("linux"):
+        error("unknown operating system; exiting...")
+        return
+    
+    # permission check
     if not is_admin():
         if sys.platform.startswith("win32"):
             error("not running with administrator privileges; trying to re-elevate...")
@@ -38,14 +45,18 @@ def main() -> None:
             )
         elif sys.platform.startswith("darwin") or sys.platform.startswith("linux"):
             error("not running with root privileges; please run this script with sudo or doas")
-        else:
-            error("permission not enough")
 
         return
 
+    # paths
+    globalvars.set_paths()
     globalvars.working_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(str(globalvars.working_dir))
     info("working directory changed to " + str(globalvars.working_dir))
+    
+    # debug
+    if os.environ.get("DEBUG") == "1":
+        globalvars.DEBUG = True
 
     host_mgr: HostsManager = HostsManager()
     globalvars.channels_manager = ChannelManager()
@@ -73,14 +84,6 @@ def main() -> None:
             _fake_device = json.load(f)
 
     globalvars.fake_device = _fake_device
-
-    if not globalvars.config_path.is_file():
-        with globalvars.config_path.open("w") as f:
-            json.dump({}, f)
-            globalvars.config = {}
-    else:
-        with globalvars.config_path.open("r") as f:
-            globalvars.config = json.load(f)
 
     if not globalvars.webcert_path.is_file() or not globalvars.webkey_path.is_file():
         warning("could not find webserver certificate or key; generating new...")
@@ -110,8 +113,9 @@ def main() -> None:
     try:
         ProxyManager.run()
     except KeyboardInterrupt:
-        warning("received Ctrl-C; quitting...")
+        warning("received interruption; quitting...")
         host_mgr.remove(globalvars.domain_target)
+        info("proxy server removed from hosts file")
         info("proxy server stopped")
 
 if __name__ == "__main__":

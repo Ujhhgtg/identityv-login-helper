@@ -11,7 +11,6 @@ import globalvars
 LOG_KEY="SvShWXDcmogbZJoU3YWe3Su3Ci-mCRcw"
 
 def _get_my_ip():
-        #get my IP
     try:
         return requests.get("https://api.ipify.org").text
     except Exception as e:
@@ -34,7 +33,7 @@ def build_sauth(login_channel, app_channel, uid, session):
     fake_data = globalvars.fake_device
     ip=_get_my_ip()
     data = {
-        "gameid": "h55",#maybe works for all games
+        "gameid": "h55",# maybe works for all games
         "login_channel": login_channel,
         "app_channel": app_channel,
         "platform": "ad",

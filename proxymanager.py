@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
 
-
 import json
 import socket
 import sys
 
 import psutil
 import requests
+import dns.resolver
 from flask import Flask, request, Response, jsonify
 from gevent import pywsgi
 
 import const
 import globalvars
-from dnsmgr import SecureDNS, SimulatedDNS
-from logutil import info, error, warning
+from logutil import info, error, warning, debug
 
 app = Flask(__name__)
 
@@ -338,15 +337,15 @@ def globalProxy(path):
 @app.before_request
 def before_request_func():
     if request.method == "POST":
-        info(f"请求 {request.method} {request.path} {request.args} {request.get_data(as_text=True)}")
+        debug(f"request: {request.method} {request.path} {request.args} {request.get_data(as_text=True)}")
     else:
-        info(f"请求 {request.method} {request.path} {request.args}")
+        debug(f"request: {request.method} {request.path} {request.args}")
 
 
 @app.after_request
 def after_request_func(response):
     if request.content_type == "application/json":
-        info(f"发送 {response.status} {response.headers} {response.get_json()}")
+        debug(f"response: {response.status} {response.headers} {response.get_json()}")
     return response
 
 
@@ -367,22 +366,20 @@ class ProxyManager:
 
     @staticmethod
     def run():
-        resolver, fallback_resolver = SecureDNS(), SimulatedDNS()
         try:
-            target = resolver.get_host_by_name(globalvars.domain_target)
+            dns_answers = dns.resolver.resolve(globalvars.domain_target)
         except:
-            target = fallback_resolver.get_host_by_name(globalvars.domain_target)
-
-        try:
-            if target is None or g_req.get(f"https://{target}", verify=False).status_code != 200:
-                warning("could not resolve target address; will use hardcoded value")
-                target = "42.186.193.21"
-        except:
+            dns_answers = []
+            
+        if len(dns_answers) == 0:
             warning("could not resolve target address; will use hardcoded value")
             target = "42.186.193.21"
+        else:
+            info("resolved target address")
+            target = dns_answers[0].address
 
         globalvars.uri_remote_ip = f"https://{target}"
-        print(globalvars.uri_remote_ip)
+        info("target address: " + globalvars.uri_remote_ip)
         ProxyManager.ensure_port_not_in_use()
         server = pywsgi.WSGIServer(
             listener=("127.0.0.1", 443),
@@ -393,12 +390,12 @@ class ProxyManager:
 
         if socket.gethostbyname(globalvars.domain_target) == "127.0.0.1":
             info("proxy server started!")
-            info("you can now start the game")
+            info("you can now launch the game")
             info("DO NOT quit the server until you LOGIN INTO the game")
             server.serve_forever()
             return True
         else:
-            error("proxy seems not to work")
-            error("you can still start the game and check if it works")
+            error("proxy does not seem to work")
+            error("you can still launch the game and check if it works")
             server.serve_forever()
             return False
