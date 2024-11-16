@@ -6,4 +6,4 @@ psutil
 pycryptodome
 pyperclip
 requests
-requests_toolbelt
+dnspython
