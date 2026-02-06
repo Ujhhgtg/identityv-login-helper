@@ -261,7 +261,7 @@ class ChannelManager:
                         globalvars.channel_account = ""
                         return False
                 except:
-                    error(f"could not simulate qrcode login request")
+                    error("could not simulate qrcode login request")
                     globalvars.channel_account = ""
                     return False
         return None

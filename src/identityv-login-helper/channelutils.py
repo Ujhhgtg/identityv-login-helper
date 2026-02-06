@@ -14,7 +14,7 @@ LOG_KEY = "SvShWXDcmogbZJoU3YWe3Su3Ci-mCRcw"
 def _get_my_ip():
     try:
         return requests.get("https://api.ipify.org").text
-    except Exception as e:
+    except Exception:
         return "127.0.0.1"
 
 
