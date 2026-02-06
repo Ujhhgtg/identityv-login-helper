@@ -6,9 +6,9 @@ import time
 
 import requests
 
-import globalvars
-from const import manual_login_channels
-from logutil import info, error
+from . import globalvars
+from .const import manual_login_channels
+from .logutil import error, info
 
 
 class Channel:
@@ -131,7 +131,11 @@ class ChannelManager:
 
     def list_channels(self, game_id: str):
         return sorted(
-            [channel.get_non_sensitive_data()  for channel in self.channels if channel.crossGame or (channel.game_id == game_id)],
+            [
+                channel.get_non_sensitive_data()
+                for channel in self.channels
+                if channel.crossGame or (channel.game_id == game_id)
+            ],
             key=lambda x: x["last_login_time"],
             reverse=True,
         )
@@ -144,7 +148,9 @@ class ChannelManager:
             exchange_info["device"] if "device" in exchange_info.keys() else {},
         )
         if login_info["login_channel"] in [i["channel"] for i in manual_login_channels]:
-            error(f"channel not supported due to qrcode login: {login_info['login_channel']}")
+            error(
+                f"channel not supported due to qrcode login: {login_info['login_channel']}"
+            )
             return False
         self.channels.append(tmp_channel)
         self.save_records()
@@ -170,7 +176,7 @@ class ChannelManager:
                 error(f"could not manually import: {tmp_channel.name}")
                 return False
         except:
-            error(f"could not manually import")
+            error("could not manually import")
             return False
 
     def login(self, uuid: str):
@@ -248,7 +254,9 @@ class ChannelManager:
                     )
                     info(f"simulated qrcode login request: {r.json()}")
                     if r.status_code == 200:
-                        return ChannelManager.simulate_confirm(channel, scanner_uuid, game_id)
+                        return ChannelManager.simulate_confirm(
+                            channel, scanner_uuid, game_id
+                        )
                     else:
                         globalvars.channel_account = ""
                         return False

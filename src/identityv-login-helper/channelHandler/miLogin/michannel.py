@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import random
@@ -10,9 +11,9 @@ import pyperclip as cb
 import requests
 from faker import Faker
 
-import channelHandler.miLogin.utils as utils
-from channelHandler.miLogin.consts import DEVICE, DEVICE_RECORD, AES_KEY
-from logutil import error
+from ...logutil import error
+from . import utils
+from .const import AES_KEY, DEVICE, DEVICE_RECORD
 
 
 def generate_fake_data():
@@ -30,9 +31,6 @@ def generate_fake_data():
     )
     architecture = random.choice(architectures)
     return f"{manufacturer}|{model}|{os_version}|{build_id}|{architecture}|{model}"
-
-
-import hashlib
 
 
 def generate_md5(input_string):
@@ -54,7 +52,7 @@ class MiLogin:
                 json.dump(self.device, f)
 
     def init_account_data(self) -> object:
-        if self.oauthData == None:
+        if self.oauthData is None:
             self.web_login()
         params = {
             "fuid": self.oauthData["uuid"],  # 用户ID

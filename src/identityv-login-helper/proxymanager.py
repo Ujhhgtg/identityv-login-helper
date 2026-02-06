@@ -4,15 +4,14 @@ import json
 import socket
 import sys
 
+import dns.resolver
 import psutil
 import requests
-import dns.resolver
-from flask import Flask, request, Response, jsonify
+from flask import Flask, Response, jsonify, request
 from gevent import pywsgi
 
-import const
-import globalvars
-from logutil import info, error, warning, debug
+from . import const, globalvars
+from .logutil import debug, error, info, warning
 
 app = Flask(__name__)
 
@@ -79,7 +78,7 @@ def request_get_as_cv(request, cv):
         headers=request.headers,
         cookies=request.cookies,
         allow_redirects=False,
-        verify=False
+        verify=False,
     )
     excluded_headers = [
         "content-encoding",
@@ -222,15 +221,13 @@ def handle_create_login():
     try:
         resp: Response = proxy(request)
         channel_account = ""
-        data = {
-            "uuid": resp.get_json()["uuid"],
-            "game_id": request.args["game_id"]
-        }
+        data = {"uuid": resp.get_json()["uuid"], "game_id": request.args["game_id"]}
         cached_qrcode_data = data
         pending_login_info = None
         new_config = resp.get_json()
-        new_config["qrcode_scanners"][0]["url"] = "https://localhost/_idv-login/index?game_id=" + request.args[
-            "game_id"]
+        new_config["qrcode_scanners"][0]["url"] = (
+            "https://localhost/_idv-login/index?game_id=" + request.args["game_id"]
+        )
         return jsonify(new_config)
     except:
         return proxy(request)
@@ -246,9 +243,7 @@ def _list_channels():
     try:
         body = globalvars.channels_manager.list_channels()
     except Exception as e:
-        body = {
-            "error": str(e)
-        }
+        body = {"error": str(e)}
     return jsonify(body)
 
 
@@ -257,22 +252,24 @@ def _switch_channel():
     channel_account = request.args["uuid"]
     if globalvars.cached_qrcode_data:
         data = globalvars.cached_qrcode_data
-        globalvars.channels_manager.simulate_scan(request.args["uuid"], data["uuid"], data["game_id"])
+        globalvars.channels_manager.simulate_scan(
+            request.args["uuid"], data["uuid"], data["game_id"]
+        )
     return {"current": channel_account}
 
 
 @app.route("/_idv-login/del", methods=["GET"])
 def _del_channel():
-    resp = {
-        "success": globalvars.channels_manager.delete(request.args["uuid"])
-    }
+    resp = {"success": globalvars.channels_manager.delete(request.args["uuid"])}
     return jsonify(resp)
 
 
 @app.route("/_idv-login/rename", methods=["GET"])
 def _rename_channel():
     resp = {
-        "success": globalvars.channels_manager.rename(request.args["uuid"], request.args["new_name"])
+        "success": globalvars.channels_manager.rename(
+            request.args["uuid"], request.args["new_name"]
+        )
     }
     return jsonify(resp)
 
@@ -285,7 +282,7 @@ def _import_channel():
     return jsonify(resp)
 
 
-@app.route("/_idv-login/index", methods=['GET'])
+@app.route("/_idv-login/index", methods=["GET"])
 def _handle_switch_page():
     return Response(const.html)
 
@@ -302,7 +299,7 @@ def handle_qrcode_query():
         return resp
 
 
-@app.route("/mpay/api/users/login/qrcode/exchange_token", methods=['POST'])
+@app.route("/mpay/api/users/login/qrcode/exchange_token", methods=["POST"])
 def handle_token_exchange():
     if globalvars.channel_account:
         info("logging in to " + globalvars.channel_account)
@@ -337,7 +334,9 @@ def globalProxy(path):
 @app.before_request
 def before_request_func():
     if request.method == "POST":
-        debug(f"request: {request.method} {request.path} {request.args} {request.get_data(as_text=True)}")
+        debug(
+            f"request: {request.method} {request.path} {request.args} {request.get_data(as_text=True)}"
+        )
     else:
         debug(f"request: {request.method} {request.path} {request.args}")
 
@@ -353,7 +352,9 @@ class ProxyManager:
     @staticmethod
     def ensure_port_not_in_use() -> None:
         if ProxyManager.check_port_in_use(443):
-            error("port 443 is in use; please quit any program using the port and re-run the script")
+            error(
+                "port 443 is in use; please quit any program using the port and re-run the script"
+            )
             sys.exit(1)
 
     @staticmethod
@@ -363,14 +364,13 @@ class ProxyManager:
                 return True
         return False
 
-
     @staticmethod
     def run():
         try:
             dns_answers = dns.resolver.resolve(globalvars.domain_target)
         except:
             dns_answers = []
-            
+
         if len(dns_answers) == 0:
             warning("could not resolve target address; will use hardcoded value")
             target = "42.186.193.21"
@@ -385,7 +385,7 @@ class ProxyManager:
             listener=("127.0.0.1", 443),
             certfile=str(globalvars.webcert_path),
             keyfile=str(globalvars.webkey_path),
-            application=app
+            application=app,
         )
 
         if socket.gethostbyname(globalvars.domain_target) == "127.0.0.1":

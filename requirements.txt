@@ -1,9 +1,0 @@
-cryptography
-faker
-flask
-gevent
-psutil
-pycryptodome
-pyperclip
-requests
-dnspython

@@ -1,7 +1,7 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from gevent import monkey
+
 # monkey-patch earlier
 monkey.patch_all()
 
@@ -11,17 +11,13 @@ import os
 import random
 import string
 import sys
-from pathlib import Path
 
-import requests
-import requests.packages
-
-import globalvars
-from certificatemanager import CertificateManager
-from channelmgr import ChannelManager
-from hostsmanager import HostsManager
-from logutil import error, info, warning
-from proxymanager import ProxyManager
+from . import globalvars
+from .certificatemanager import CertificateManager
+from .channelmgr import ChannelManager
+from .hostsmanager import HostsManager
+from .logutil import error, info, warning
+from .proxymanager import ProxyManager
 
 
 def is_admin() -> bool | None:
@@ -30,12 +26,17 @@ def is_admin() -> bool | None:
     elif sys.platform.startswith("darwin") or sys.platform.startswith("linux"):
         return os.geteuid() == 0
 
+
 def main() -> None:
     # os check
-    if not sys.platform.startswith("win32") and not sys.platform.startswith("darwin") and not sys.platform.startswith("linux"):
+    if (
+        not sys.platform.startswith("win32")
+        and not sys.platform.startswith("darwin")
+        and not sys.platform.startswith("linux")
+    ):
         error("unknown operating system; exiting...")
         return
-    
+
     # permission check
     if not is_admin():
         if sys.platform.startswith("win32"):
@@ -44,7 +45,9 @@ def main() -> None:
                 None, "runas", sys.executable, " ".join(sys.argv), None, 1
             )
         elif sys.platform.startswith("darwin") or sys.platform.startswith("linux"):
-            error("not running with root privileges; please run this script with sudo or doas")
+            error(
+                "not running with root privileges; please run this script with sudo or doas"
+            )
 
         return
 
@@ -53,15 +56,13 @@ def main() -> None:
     globalvars.working_dir.mkdir(parents=True, exist_ok=True)
     os.chdir(str(globalvars.working_dir))
     info("working directory changed to " + str(globalvars.working_dir))
-    
+
     # debug
     if os.environ.get("DEBUG") == "1":
         globalvars.DEBUG = True
 
     host_mgr: HostsManager = HostsManager()
     globalvars.channels_manager = ChannelManager()
-
-    requests.packages.urllib3.disable_warnings()
 
     if not globalvars.fake_device_path.is_file():
         udid = "".join(random.choices(string.hexdigits, k=16))
@@ -117,6 +118,7 @@ def main() -> None:
         host_mgr.remove(globalvars.domain_target)
         info("proxy server removed from hosts file")
         info("proxy server stopped")
+
 
 if __name__ == "__main__":
     main()

@@ -5,9 +5,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import globalvars
-from logutil import warning, error, command
 from python_hosts import Hosts, HostsEntry
+
+from . import globalvars
+from .logutil import command, error, warning
 
 
 class HostsManager:
@@ -42,7 +43,7 @@ class HostsManager:
 
         if sys.platform.startswith("win32"):
             command("ipconfig /flushdns")
-            subprocess.run(['ipconfig', '/flushdns'])
+            subprocess.run(["ipconfig", "/flushdns"])
 
     def remove(self, name: str) -> None:
         self.hosts.remove_all_matching(name=name)
@@ -50,7 +51,7 @@ class HostsManager:
 
         if sys.platform.startswith("win32"):
             command("ipconfig /flushdns")
-            subprocess.run(['ipconfig', '/flushdns'])
-    
-    def exists(self, name: str) -> bool :
+            subprocess.run(["ipconfig", "/flushdns"])
+
+    def exists(self, name: str) -> bool:
         return self.hosts.exists(names=[name])

@@ -1,0 +1,29 @@
+[project]
+name = "identityv-login-helper"
+version = "0.1.0"
+authors = [{ name = "Fey Xie", email = "feyxiexzf@gmail.com" }]
+description = "Utility that enables password login in IdentityV PC client. "
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "GPL-3.0"
+license-files = ["LICENSE"]
+dependencies = [
+    "cryptography",
+    "faker",
+    "flask",
+    "gevent",
+    "psutil",
+    "pycryptodome",
+    "pyperclip",
+    "requests",
+    "dnspython",
+    "python_hosts",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ujhhgtg/identityv-login-helper"
+Issues = "https://github.com/Ujhhgtg/identityv-login-helper/issues"

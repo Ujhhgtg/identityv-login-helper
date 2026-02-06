@@ -7,11 +7,15 @@ import sys
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+)
 from cryptography.x509.oid import NameOID
 
-import globalvars
-from logutil import command, warning, error, info
+from . import globalvars
+from .logutil import command, error, info, warning
 
 
 class CertificateManager:
@@ -98,31 +102,45 @@ class CertificateManager:
         try:
             if sys.platform.startswith("win32"):
                 command("certutil -addstore Root " + cert_path)
-                subprocess.check_call([
-                    'certutil', '-addstore', 'Root', cert_path
-                ])
+                subprocess.check_call(["certutil", "-addstore", "Root", cert_path])
 
             elif sys.platform.startswith("darwin"):
-                command("sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain " + cert_path)
-                subprocess.check_call([
-                    'sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot', '-k', '/Library/Keychains/System.keychain', cert_path
-                ])
+                command(
+                    "sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "
+                    + cert_path
+                )
+                subprocess.check_call(
+                    [
+                        "sudo",
+                        "security",
+                        "add-trusted-cert",
+                        "-d",
+                        "-r",
+                        "trustRoot",
+                        "-k",
+                        "/Library/Keychains/System.keychain",
+                        cert_path,
+                    ]
+                )
 
             else:
-                command("sudo cp " + cert_path + " " + str(globalvars.system_cert_linux_path))
-                subprocess.check_call([
-                    'sudo', 'cp', cert_path, str(globalvars.system_cert_linux_path)
-                ])
+                command(
+                    "sudo cp "
+                    + cert_path
+                    + " "
+                    + str(globalvars.system_cert_linux_path)
+                )
+                subprocess.check_call(
+                    ["sudo", "cp", cert_path, str(globalvars.system_cert_linux_path)]
+                )
                 command("sudo update-ca-certificates")
-                proc_1 = subprocess.run([
-                    'sudo', 'update-ca-certificates'
-                ])
+                proc_1 = subprocess.run(["sudo", "update-ca-certificates"])
                 if proc_1.returncode != 0:
-                    warning("'update-ca-certificates' failed; trying 'update-ca-trust'...")
+                    warning(
+                        "'update-ca-certificates' failed; trying 'update-ca-trust'..."
+                    )
                     command("sudo update-ca-trust")
-                    proc_2 = subprocess.run([
-                        'sudo', 'update-ca-trust'
-                    ])
+                    proc_2 = subprocess.run(["sudo", "update-ca-trust"])
                     if proc_2.returncode != 0:
                         error("'update-ca-trust' failed")
                         raise subprocess.CalledProcessError(1, "")
